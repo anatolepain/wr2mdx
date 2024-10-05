@@ -1,0 +1,73 @@
+@font-face {
+	font-family:'HELVETICANEUARABIC';
+	src: url('fonts/HelveticaNeueLTArabic-Roman.ttf');
+}
+
+
+@font-face {
+	font-family:'HELVETICANEUARABIC';
+	src: url('fonts/HelveticaNeueLTArabic-Bold.ttf');
+	font-weight:700;
+}
+
+@font-face {
+	font-family:'Optima';
+	src: url('fonts/Optima_Regular.woff2.ttf');
+}
+
+@font-face {
+	font-family:'Optima';
+	src: url('fonts/Optima_Regular.woff2.ttf');
+	font-weight: 700;
+}
+
+
+body {
+	font-family: "HELVETICANEUARABIC", sans-serif;
+}
+
+.headword{
+	color: #F70D1A;
+	display: inline;
+	font-family: Optima, sans-serif;
+	font-size: 22px;
+	font-style: normal;
+	font-weight: bold;
+	height: auto;
+	line-height: 19.5px;
+	width: auto;
+}
+
+.word{
+	color: green;
+	font-weight: 700;
+}
+
+
+.example {
+    color:rgb(29, 42, 87);
+    display:block;
+    font-size:110%;
+
+
+}
+
+.example:before {
+	content: "●";
+	color: #F70D1A;
+	font-size: 0.8em;
+	padding-left: 8pt;
+	padding-right: 5pt;
+	position: relative;
+	top: -0.15em;
+}
+
+
+.example_translation:before {
+	content: "✎";
+	color: red;
+	padding-left: 8pt;
+	padding-right: 5pt;
+	position: relative;
+	top: 1px;
+}
