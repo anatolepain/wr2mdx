@@ -7,6 +7,20 @@ import os
 
 URL = "https://www.wordreference.com"
 
+# wordreference.com is behind the Sucuri WAF, which returns
+# "#954 Access denied (Error Code: 1002)" for requests that don't look like they
+# come from a real browser. Sending browser-like headers is enough to pass.
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.5",
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
+}
+
+session = requests.Session()
+session.headers.update(HEADERS)
+
 wr_available_dictinoaries = (
 ("enar" , "English-Arabic"),
 ("enzh" , "English-Chinese"),
@@ -60,7 +74,14 @@ def print_available_dictinaries():
 
 def define_word(word,dict_code):
     captcha=False
-    page = requests.get(URL+ '/' + dict_code + '/' + word)
+    page = session.get(URL+ '/' + dict_code + '/' + word)
+    if page.status_code == 403:
+        raise SystemExit(
+            "Blocked by wordreference.com (HTTP 403 / Error Code: 1002).\n"
+            "The site's WAF rejected the request. Try again later, slow down the\n"
+            "requests, or update the User-Agent in HEADERS."
+        )
+    page.raise_for_status()
     soup = BeautifulSoup(page.content, "html.parser")
     results = soup.find_all("tr", {'class':['even', 'odd']})
     if (soup.find_all("div", {'id':'WarnNote'})):
@@ -155,7 +176,7 @@ def download_audio(word, links, audio_path):
         if os.path.exists(path):
             audio_file_names.append((word + '-' + lang + '.mp3',lang))
         else:
-            file = requests.get(audio_link)
+            file = session.get(audio_link)
             if file.status_code == 200:    
                 audio_file_names.append((word + '-' + lang + '.mp3',lang))
                 open(path, 'wb').write(file.content)
