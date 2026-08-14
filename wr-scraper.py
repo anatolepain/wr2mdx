@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import re
 import requests
 from bs4 import BeautifulSoup
 import os
@@ -136,14 +137,22 @@ def define_word(word,dict_code):
     if translation_number > 0:
             translations[translation_number] = translation
     
-    try:
-        audio_links = soup.find("div",id = "listen_widget").script.string[18:-3].split(',')
-        audio_links = [URL + link[1:-1] for link in audio_links]
-    except:
-        audio_links = []
+    audio_links = extract_audio_links(soup)
         
     result = (translations, audio_links, captcha)
     return result
+
+# The listen widget declares its audio files in an inline script, e.g.
+#   window.audioFiles = ['/audio/en/uk/general/en012858.mp3', ...];
+# The variable name has changed over time (it used to be `var audioFiles`), so
+# pull the quoted paths out instead of slicing at fixed offsets.
+AUDIO_PATH_RE = re.compile(r"['\"](/audio/[^'\"]+)['\"]")
+
+def extract_audio_links(soup):
+    widget = soup.find("div", id="listen_widget")
+    if widget is None or widget.script is None or not widget.script.string:
+        return []
+    return [URL + path for path in AUDIO_PATH_RE.findall(widget.script.string)]
 
 class list_dict_codes(argparse.Action):
     def __init__(self, option_strings, dest, **kwargs):
@@ -170,15 +179,17 @@ def print_translations(translations, colors=""):
 
 def download_audio(word, links, audio_path):
     audio_file_names=[]
+    os.makedirs(audio_path, exist_ok=True)
     for audio_link in links:
         lang=audio_link.rsplit('/', 2)[1]
-        path=audio_path+ word + '-' + lang + '.mp3'
+        file_name = word + '-' + lang + '.mp3'
+        path=os.path.join(audio_path, file_name)
         if os.path.exists(path):
-            audio_file_names.append((word + '-' + lang + '.mp3',lang))
+            audio_file_names.append((file_name,lang))
         else:
             file = session.get(audio_link)
             if file.status_code == 200:    
-                audio_file_names.append((word + '-' + lang + '.mp3',lang))
+                audio_file_names.append((file_name,lang))
                 open(path, 'wb').write(file.content)
     return audio_file_names
 
